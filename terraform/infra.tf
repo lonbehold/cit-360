@@ -167,14 +167,171 @@ resource "aws_security_group" "myip" {
       protocol = "tcp"
       cidr_blocks = ["76.174.19.212/29"]
   }
+  
+  egress {
+      from_port = 0
+      to_port = 0
+      protocol = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+#security group for vpc access to DB
+resource "aws_security_group" "rds" {
+  name = "sgforrds"
+
+  ingress {
+      from_port = 3306
+      to_port = 3306
+      protocol = "tcp"
+      cidr_blocks = ["172.31.0.0/16"]
+  }
+  
+  egress {
+      from_port = 0
+      to_port = 0
+      protocol = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+#security group for the 2 instances
+resource "aws_security_group" "for2in" {
+  name = "sgforwebservers"
+
+  ingress {
+      from_port = 80
+      to_port = 80
+      protocol = "tcp"
+      cidr_blocks = ["172.31.0.0/16"]
+  }
+  ingress {
+      from_port = 22
+      to_port = 22
+      protocol = "tcp"
+      cidr_blocks = ["172.31.0.0/16"]
+  }
+  
+  egress {
+      from_port = 0
+      to_port = 0
+      protocol = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+#security group for the elb
+resource "aws_security_group" "forelb" {
+  name = "sgforelb"
+
+  ingress {
+      from_port = 80
+      to_port = 80
+      protocol = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+  }
+  
+  egress {
+      from_port = 0
+      to_port = 0
+      protocol = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 	
 #bastion instance
 resource "aws_instance" "bastion" {
     ami = "ami-c4469aa4"
     instance_type = "t2.micro"
-    subnet_id = "${aws_subnet.public_subnet_c.id}"
+    subnet_id = "${aws_subnet.public_subnet_a.id}"
 	associate_public_ip_address = true
 	vpc_security_group_ids = ["${aws_security_group.myip.id}"]
 	key_name = "cit360"
+	
+	tags{
+		Name = "bastioni"
+	}
+}
+
+#subnet group to reference private_a and private_b
+resource "aws_db_subnet_group" "privateab" {
+    name = "main"
+    subnet_ids = ["${aws_subnet.private_subnet_a.id}", "${aws_subnet.private_subnet_b.id}"]
+    
+	tags {
+        Name = "My DB subnet group"
+    }
+}
+
+#rds instance
+resource "aws_db_instance" "mariadbi" {
+  allocated_storage    = 5
+  engine               = "mariadb"
+  engine_version       = "10.0.24"
+  instance_class       = "db.t2.micro"
+  name                 = "mydb"
+  identifier           = "rdsiofmariadb"
+  username             = "foo"
+  password             = "${var.password}"
+  db_subnet_group_name = "${aws_db_subnet_group.privateab.id}"
+  vpc_security_group_ids = ["${aws_security_group.rds.id}"]
+  multi_az = false
+}
+
+#Create a new elastic load balancer
+resource "aws_elb" "bar" {
+  name = "elb"
+  subnets = ["${aws_subnet.public_subnet_b.id}", "${aws_subnet.public_subnet_c.id}"]
+
+  listener {
+    instance_port = 80
+    instance_protocol = "http"
+    lb_port = 80
+    lb_protocol = "http"
+  }
+
+  health_check {
+    healthy_threshold = 2
+    unhealthy_threshold = 2
+    timeout = 5
+    target = "HTTP:80/"
+    interval = 30
+  }
+
+  instances = ["${aws_instance.web1.id}", "${aws_instance.web2.id}"]
+  connection_draining = true
+  connection_draining_timeout = 60
+  security_groups = ["${aws_security_group.forelb.id}"]
+
+  tags {
+    Name = "myelb"
+  }
+}
+
+#web1 instance
+resource "aws_instance" "web1" {
+    ami = "ami-d2c924b2"
+    instance_type = "t2.micro"
+    subnet_id = "${aws_subnet.private_subnet_b.id}"
+	vpc_security_group_ids = ["${aws_security_group.for2in.id}"]
+	key_name = "cit360"
+	
+	tags {
+		Name = "webserver-b"
+		service = "cirriculum"
+	}
+}
+
+#web2 instance
+resource "aws_instance" "web2" {
+    ami = "ami-d2c924b2"
+    instance_type = "t2.micro"
+    subnet_id = "${aws_subnet.private_subnet_c.id}"
+	vpc_security_group_ids = ["${aws_security_group.for2in.id}"]
+	key_name = "cit360"
+	
+	tags {
+		Name = "webserver-c"
+		service = "cirriculum"
+	}
 }
