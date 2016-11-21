@@ -278,7 +278,7 @@ resource "aws_db_instance" "mariadbi" {
   multi_az = false
   
   tags{
-	Name = "dbforwebservers"
+	Name = "dbforwebserver"
   }
 }
 
