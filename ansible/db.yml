@@ -1,11 +1,7 @@
 ---
 - hosts: db
-  vars_files:
-	  - secrets.yml
-  tasks:
-	  - name: use secret
-	    include_vars: secrets.yml
-		
+
+  tasks:	
       - name: copy repo
         become: yes
         copy: src=db/MariaDB.repo dest=/etc/yum.repos.d/MariaDB.repo mode=0644

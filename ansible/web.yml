@@ -8,14 +8,10 @@
     db_host: rdsiofmariadb.cnco0ir0ovuq.us-west-2.rds.amazonaws.com
     db_database: curriculum
     db_username: foo
+	db_password: password
     db_port: 3306
     service_dir: /usr/share/nginx/{{ service_name }}
-  vars_files:
-	- secrets.yml
-  tasks:
-    - name: use secrets
-	  include_vars: secrets.yml
-	  
+  tasks:  
     - name: search for line and change
       become: yes
       lineinfile: dest=/etc/sysconfig/selinux regexp="^SELINUX=" line="SELINUX=permissive"

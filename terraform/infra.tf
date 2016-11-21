@@ -276,6 +276,10 @@ resource "aws_db_instance" "mariadbi" {
   db_subnet_group_name = "${aws_db_subnet_group.privateab.id}"
   vpc_security_group_ids = ["${aws_security_group.rds.id}"]
   multi_az = false
+  
+  tags{
+	Name = "dbforwebservers"
+  }
 }
 
 #Create a new elastic load balancer
