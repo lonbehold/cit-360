@@ -8,7 +8,7 @@
     db_host: rdsiofmariadb.cnco0ir0ovuq.us-west-2.rds.amazonaws.com
     db_database: curriculum
     db_username: foo
-	db_password: password
+    db_password: password
     db_port: 3306
     service_dir: /usr/share/nginx/{{ service_name }}
   tasks:  
