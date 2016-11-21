@@ -1,6 +1,7 @@
 ---
 - hosts: db
-
+  vars:
+      db_password: password
   tasks:	
       - name: copy repo
         become: yes
@@ -26,5 +27,5 @@
         unarchive: src=db/db.tgz dest=~/ mode=0000
 
       - name: move into directory and create file
-        command: ./make_databases.sh {{ db_password }} rdsiofmariadb.cnco0ir0ovuq.us-west-2.rds.amazonaws.com chdir=~/db
+        command: ./make_databases.sh {{ db_password }} rdsiofmariadb.cnco0ir0ovuq.us-west-2.rds.amazonaws.com:3306 chdir=~/db
         ignore_errors: True
