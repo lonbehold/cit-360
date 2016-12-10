@@ -7,15 +7,15 @@
         become: yes
         copy: src=db/MariaDB.repo dest=/etc/yum.repos.d/MariaDB.repo mode=0644
 		
-	  - name: Download MariaDB client
-		become: yes
-		package: name=MariaDB-client update_cache=yes state=present
+      - name: Download MariaDB client
+        become: yes
+        package: name=MariaDB-client update_cache=yes state=present
 
       - name: unzip
-		become: yes
+        become: yes
         unarchive: src=db/db.tgz dest=~/ mode=0777
 
-      - name: move into directory and create file
-		become: yes
+      - name: create db and move into directory
+        become: yes
         command: ./make_databases.sh {{ db_password }} rdsiofmariadb.cnco0ir0ovuq.us-west-2.rds.amazonaws.com chdir=~/db
         ignore_errors: True

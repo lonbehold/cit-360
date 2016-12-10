@@ -198,6 +198,7 @@ resource "aws_security_group" "rds" {
 #security group for the 2 instances
 resource "aws_security_group" "for2in" {
   name = "sgforwebservers"
+  vpc_id= "${var.vpc_id}"
 
   ingress {
       from_port = 80
