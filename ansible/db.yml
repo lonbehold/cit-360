@@ -1,31 +1,21 @@
 ---
 - hosts: db
   vars:
-      db_password: password
+      db_password: barbarbar
   tasks:	
       - name: copy repo
         become: yes
         copy: src=db/MariaDB.repo dest=/etc/yum.repos.d/MariaDB.repo mode=0644
-
-      - name: update server
-        become: yes
-        apt: name=mariadb-server,mariadb update_cache=yes state=present
-
-      - name: manage mariadb service
-        become: yes
-        service: name=mariadb state=started enabled=yes
-
-      - name: moving file
-        template: src=db/mariadb_answers.txt dest=/tmp/mariadb_answers.txt mode=0644
-
-      - name: move txt file
-        become: yes
-        shell: /usr/bin/mysql_secure_installation </tmp/mariadb_answers.txt
-
+		
+	  - name: Download MariaDB client
+		become: yes
+		package: name=MariaDB-client update_cache=yes state=present
 
       - name: unzip
-        unarchive: src=db/db.tgz dest=~/ mode=0000
+		become: yes
+        unarchive: src=db/db.tgz dest=~/ mode=0777
 
       - name: move into directory and create file
-        command: ./make_databases.sh {{ db_password }} rdsiofmariadb.cnco0ir0ovuq.us-west-2.rds.amazonaws.com:3306 chdir=~/db
+		become: yes
+        command: ./make_databases.sh {{ db_password }} rdsiofmariadb.cnco0ir0ovuq.us-west-2.rds.amazonaws.com chdir=~/db
         ignore_errors: True

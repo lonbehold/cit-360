@@ -322,7 +322,7 @@ resource "aws_instance" "web1" {
 	
 	tags {
 		Name = "webserver-b"
-		service = "cirriculum"
+		service = "curriculum"
 	}
 }
 
@@ -336,6 +336,6 @@ resource "aws_instance" "web2" {
 	
 	tags {
 		Name = "webserver-c"
-		service = "cirriculum"
+		service = "curriculum"
 	}
 }
