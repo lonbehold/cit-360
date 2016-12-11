@@ -26,29 +26,29 @@
 
     - name: install nginx and php
       become: yes
-      yum: name=nginx,php,php-fpm,php-ldap,php-mbstring,php-mcrypt,php-mysql,php-phpunit-PHPUnit update_cache=yes state=present
+      yum: name=nginx,php,php-fpm,php-ldap,php-mbstring,php-mcrypt,php-mysql,php-phpunit-PHPUnit update_cache=yes state=latest
       register: nginx_install
 
-    - name: get
+    - name: download composer
       become: yes
       shell: curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
+ 
     - name: replace nginx.conf in dest
       become: yes
-      copy: src=web/nginx.conf dest=/etc/nginx/nginx.conf mode=0640
+      copy: src=web/nginx.conf dest=/etc/nginx/nginx.conf mode=0000
       register: nginx_conf
 
-    - name: move file
+    - name: copy vhost over to nginx
       become: yes
       template: src=web/vhost.conf.j2 dest=/etc/nginx/conf.d/{{ service_name }}.conf mode=0644
       register: vhost_conf
 
-    - name: move file
+    - name: config php
       become: yes
       template: src=web/php.ini.j2 dest=/etc/php.ini mode=0644
       register: php_conf
 
-    - name: copy from web into etc
+    - name: copy from webphp to etcphp
       become: yes
       copy: src=web/php-fpm-web.conf dest=/etc/php-fpm.d/www.conf mode=0644
       register: php_fpm_conf
@@ -58,12 +58,12 @@
       service: name=nginx state=restarted enabled=yes
       when: nginx_install|changed or nginx_conf|changed or vhost_conf|changed
 
-    - name: print state when nginx is installed or php has changed
+    - name: restart nginx when condition happens
       become: yes
       service: name=php-fpm state=restarted enabled=yes
       when: nginx_install|changed or php_conf|changed or php_fpm_conf|changed
 
-    - name: print path
+    - name: create service dir
       become: yes
       file: path="{{ service_dir }}" state=directory
 
@@ -71,18 +71,19 @@
       become: yes
       unarchive: src=web/{{ service_name }}.tgz dest="{{ service_dir }}" mode=0755
 
-    - name: change directory
+    - name: use composer to update service dir
       become: yes
       command: /usr/local/bin/composer update chdir={{ service_dir }}
 
-    - name: change permission
+    - name: create storage service dir
       become: yes
       command: chmod -R 0777 storage chdir="{{ service_dir }}"
-
-    - name: change ownership
+    
+    - name: chown of nginx
+      become: yes
       command: chown -R nginx:nginx . chdir="{{ service_dir }}"
-
-    - name: moving file
+     
+    - name: setup web env
       become: yes
       template: src=web/env.j2 dest="{{ service_dir }}/.env" mode=0644 owner=nginx
-
+      ignore_errors: yes
