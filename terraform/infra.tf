@@ -25,7 +25,7 @@ resource "aws_eip" "ng" {
 #nat gateway
 resource "aws_nat_gateway" "natgw" {
     allocation_id = "${aws_eip.ng.id}"
-    subnet_id = "${aws_subnet.private_subnet_a.id}"
+    subnet_id = "${aws_subnet.public_subnet_a.id}"
 }
 
 #public route table
@@ -198,7 +198,6 @@ resource "aws_security_group" "rds" {
 #security group for the 2 instances
 resource "aws_security_group" "for2in" {
   name = "sgforwebservers"
-  vpc_id= "${var.vpc_id}"
 
   ingress {
       from_port = 80
